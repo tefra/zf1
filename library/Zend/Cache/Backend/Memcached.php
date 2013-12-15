@@ -475,6 +475,38 @@ class Zend_Cache_Backend_Memcached extends Zend_Cache_Backend implements Zend_Ca
         return false;
     }
 
+	/**
+	 * Memcached::increment
+	 *
+	 * @param string $id cache id
+	 * @param numerical $offset to increase counter
+	 * @param numerical $initial value to set counter
+	 * @param int $extraLifetime
+	 * @return numerical new items value on success or FALSE on failure.
+	 */
+	public function increment($id, $offset = 1, $initial = 0, $specificLifetime = false)
+	{
+		$result = $this->_memcache->increment($id, $offset);
+		if (!$result) {
+				$lifetime = $this->getLifetime($specificLifetime);
+				$this->_memcache->add($id, $initial, false, $lifetime);
+				$result = $this->_memcache->increment($id, $offset);
+		}
+		return $result;
+	}
+
+	/**
+	 * Custom get to retrieve incremental items
+	 *
+	 * @param string $id cache id
+	 * @return numerical|false cached item
+	 */
+	public function getCounterKey($id)
+	{
+		$tmp = $this->_memcache->get($id);
+		return is_numeric($tmp) ? $tmp : false;
+	}
+
     /**
      * Return an associative array of capabilities (booleans) of the backend
      *
